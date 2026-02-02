@@ -1,0 +1,135 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    height: 100vh;
+    overflow: hidden;
+
+    /* Animated gradient background */
+    background: linear-gradient(-45deg, #6a11cb, #2575fc, #ff6a00, #ee0979);
+    background-size: 400% 400%;
+    animation: gradientMove 12s ease infinite;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+/* Career images blended as soft background */
+body::after {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 100%;
+
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+
+    animation: imageSlide 18s infinite;
+    opacity: 0.18;
+    z-index: 0;
+}
+
+
+/* Login Box */
+.login-box {
+    position: relative;
+    z-index: 1;
+    background: white;
+    padding: 40px;
+    width: 350px;
+    border-radius: 12px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    text-align: center;
+
+    /* POP-UP animation */
+    animation: popIn 0.8s ease-out;
+}
+
+/* Inputs */
+input {
+    width: 100%;
+    padding: 12px;
+    margin: 12px 0;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    transition: 0.3s;
+}
+
+input:focus {
+    border-color: #2575fc;
+    transform: scale(1.05);
+}
+
+/* Button */
+button {
+    width: 100%;
+    padding: 12px;
+    background: #2575fc;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover {
+    background: #6a11cb;
+    transform: scale(1.05);
+}
+
+/* Text */
+.msg { color: red; }
+
+/* Animations */
+@keyframes popIn {
+    from { transform: scale(0.6); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes gradientMove {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+@keyframes imageSlide {
+    0%   { background-image: url("../images/img1.png"); }
+    33%  { background-image: url("../images/img2.png"); }
+    66%  { background-image: url("../images/img3.png"); }
+    100% { background-image: url("../images/img1.png"); }
+}
+/* MOBILE RESPONSIVE FIX */
+@media (max-width: 600px) {
+
+    .login-box {
+        width: 92%;
+        padding: 25px;
+    }
+
+    h2 {
+        font-size: 20px;
+    }
+
+    input {
+        font-size: 14px;
+    }
+
+    button {
+        font-size: 15px;
+    }
+
+    /* Show full background images on mobile */
+    body::after {
+        background-size: contain;
+        background-position: center top;
+        background-repeat: no-repeat;
+        opacity: 0.25;
+    }
+}
+
+
+
+
+
