@@ -42,8 +42,6 @@ def init_db():
     conn.close()
 
 
-init_db()
-
 # ---------------- ROUTES ----------------
 
 @app.route("/")
@@ -189,6 +187,7 @@ def reset_with_token(token):
 
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
