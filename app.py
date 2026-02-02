@@ -59,7 +59,7 @@ def login():
     username = request.form["username"]
     password = hash_password(request.form["password"])
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM users WHERE username=? AND password=? AND otp IS NULL", (username, password))
     user = cursor.fetchone()
@@ -80,7 +80,7 @@ def register():
         password = hash_password(request.form["password"])
         otp = str(random.randint(100000, 999999))
 
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(DB_PATH, check_same_thread=False)
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM users WHERE email=?", (email,))
         if cursor.fetchone():
@@ -118,7 +118,7 @@ def verify_otp():
         email = request.form["email"]
         entered_otp = request.form["otp"]
 
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(DB_PATH, check_same_thread=False)
         cursor = conn.cursor()
         cursor.execute("SELECT otp, otp_time FROM users WHERE email=?", (email,))
         user = cursor.fetchone()
@@ -132,7 +132,7 @@ def verify_otp():
                 return redirect(url_for("register"))
 
             if entered_otp == real_otp:
-                conn = sqlite3.connect(DB_PATH)
+                conn = sqlite3.connect(DB_PATH, check_same_thread=False)
                 cursor = conn.cursor()
                 cursor.execute("UPDATE users SET otp=NULL, otp_time=NULL WHERE email=?", (email,))
                 conn.commit()
@@ -151,7 +151,7 @@ def forgot_password():
     if request.method == "POST":
         email = request.form["email"]
 
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(DB_PATH, check_same_thread=False)
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM users WHERE email=?", (email,))
         user = cursor.fetchone()
@@ -188,7 +188,7 @@ def reset_with_token(token):
     if request.method == 'POST':
         new_password = hash_password(request.form['password'])
 
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(DB_PATH, check_same_thread=False)
         cursor = conn.cursor()
         cursor.execute("UPDATE users SET password=? WHERE email=?", (new_password, email))
         conn.commit()
@@ -201,4 +201,5 @@ def reset_with_token(token):
 
 if __name__ == "__main__":
     app.run(debug=True)
+
 
