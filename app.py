@@ -7,21 +7,19 @@ import random
 import time
 import os
 
-# ✅ Database path allowed on Render
 DB_PATH = "/tmp/users.db"
 
 app = Flask(__name__)
-
-# ✅ Secret key from environment with fallback
 app.secret_key = os.environ.get("SECRET_KEY", "fallback_secret_key")
 
 # ---------------- MAIL CONFIG ----------------
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_TIMEOUT'] = 30   # ✅ Increased timeout
+app.config['MAIL_TIMEOUT'] = 30  # Increased for cloud
 app.config['MAIL_USERNAME'] = os.environ.get("MAIL_USERNAME")
 app.config['MAIL_PASSWORD'] = os.environ.get("MAIL_PASSWORD")
+app.config['MAIL_SUPPRESS_SEND'] = False
 
 mail = Mail(app)
 serializer = URLSafeTimedSerializer(app.secret_key)
@@ -70,9 +68,11 @@ def login():
 
     if user:
         return render_template("dashboard.html", username=username)
+
     flash("Invalid credentials or account not verified")
     return redirect(url_for("home"))
 
+# ---------------- REGISTER ----------------
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
@@ -97,6 +97,7 @@ def register():
         conn.commit()
         conn.close()
 
+        # Safe email send
         try:
             msg = Message('Your Registration OTP',
                           sender=app.config['MAIL_USERNAME'],
@@ -104,14 +105,14 @@ def register():
             msg.body = f'Your OTP is: {otp}'
             mail.send(msg)
         except Exception as e:
-            print("Email sending failed:", e)
-            flash(f"Email failed. OTP: {otp}")
+            print("MAIL ERROR:", e)
 
-        flash("OTP sent to email")
+        flash("OTP generated. Check email.")
         return redirect(url_for("verify_otp"))
 
     return render_template("register.html")
 
+# ---------------- VERIFY OTP ----------------
 @app.route("/verify", methods=["GET", "POST"])
 def verify_otp():
     if request.method == "POST":
@@ -140,11 +141,12 @@ def verify_otp():
 
                 flash("Account verified! Please login.")
                 return redirect(url_for("home"))
-            else:
-                flash("Invalid OTP")
+
+            flash("Invalid OTP")
 
     return render_template("verify.html")
 
+# ---------------- FORGOT PASSWORD ----------------
 @app.route("/forgot", methods=["GET", "POST"])
 def forgot_password():
     if request.method == "POST":
@@ -167,15 +169,16 @@ def forgot_password():
                 msg.body = f'Reset link: {link}'
                 mail.send(msg)
             except Exception as e:
-                print("Email failed:", e)
+                print("MAIL ERROR:", e)
 
-            flash("Reset link sent")
+            flash("Reset link generated.")
             return redirect(url_for("home"))
-        else:
-            flash("Email not found")
+
+        flash("Email not found")
 
     return render_template("forgot.html")
 
+# ---------------- RESET PASSWORD ----------------
 @app.route('/reset/<token>', methods=['GET', 'POST'])
 def reset_with_token(token):
     try:
@@ -200,9 +203,10 @@ def reset_with_token(token):
 with app.app_context():
     init_db()
 
-# ✅ Required for Render
 if __name__ == "__main__":
     app.run()
+
+
 
 
 
