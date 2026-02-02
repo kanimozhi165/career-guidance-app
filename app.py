@@ -7,7 +7,11 @@ import random
 import time
 import os
 
-DB_PATH = "/tmp/users.db"
+if os.name == "nt":  # Windows (your PC)
+    DB_PATH = "users.db"
+else:  # Linux (Render server)
+    DB_PATH = "/tmp/users.db"
+
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "fallback_secret_key")
@@ -16,10 +20,12 @@ app.secret_key = os.environ.get("SECRET_KEY", "fallback_secret_key")
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_TIMEOUT'] = 60  # Increased for cloud
+app.config['MAIL_TIMEOUT'] = 60
 app.config['MAIL_USERNAME'] = os.environ.get("MAIL_USERNAME")
 app.config['MAIL_PASSWORD'] = os.environ.get("MAIL_PASSWORD")
-app.config['MAIL_SUPPRESS_SEND'] = False
+
+# 🔥 THIS STOPS EMAIL FROM CAUSING SERVER CRASH
+app.config['MAIL_SUPPRESS_SEND'] = True
 
 mail = Mail(app)
 serializer = URLSafeTimedSerializer(app.secret_key)
@@ -97,7 +103,7 @@ def register():
         conn.commit()
         conn.close()
 
-        # Safe email send
+        # Email will not actually send (safe)
         try:
             msg = Message('Your Registration OTP',
                           sender=app.config['MAIL_USERNAME'],
@@ -107,7 +113,8 @@ def register():
         except Exception as e:
             print("MAIL ERROR:", e)
 
-        flash("OTP generated. Check email.")
+        # 🔥 SHOW OTP DIRECTLY (since email is disabled)
+        flash(f"Your OTP is {otp}")
         return redirect(url_for("verify_otp"))
 
     return render_template("register.html")
@@ -171,7 +178,7 @@ def forgot_password():
             except Exception as e:
                 print("MAIL ERROR:", e)
 
-            flash("Reset link generated.")
+            flash("Reset link generated (email suppressed).")
             return redirect(url_for("home"))
 
         flash("Email not found")
@@ -205,13 +212,3 @@ with app.app_context():
 
 if __name__ == "__main__":
     app.run()
-
-
-
-
-
-
-
-
-
-
