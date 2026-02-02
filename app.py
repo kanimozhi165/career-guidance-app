@@ -1,5 +1,4 @@
 
-
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_mail import Mail, Message
 from itsdangerous import URLSafeTimedSerializer
@@ -7,11 +6,10 @@ import sqlite3
 import hashlib
 import random
 import time
-
 import os
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "users.db")
-
 
 app = Flask(__name__)
 app.secret_key = "career_guidance_secret_key"
@@ -20,6 +18,7 @@ app.secret_key = "career_guidance_secret_key"
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_TIMEOUT'] = 5
 app.config['MAIL_USERNAME'] = 'kaniavid@gmail.com'
 app.config['MAIL_PASSWORD'] = 'qousdhqdxawxstqk'
 
@@ -46,7 +45,6 @@ def init_db():
     """)
     conn.commit()
     conn.close()
-
 
 init_db()
 
@@ -80,12 +78,10 @@ def register():
         username = request.form["username"]
         email = request.form["email"]
         password = hash_password(request.form["password"])
-
         otp = str(random.randint(100000, 999999))
 
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
-
         cursor.execute("SELECT * FROM users WHERE email=?", (email,))
         if cursor.fetchone():
             flash("Email already registered")
@@ -100,15 +96,14 @@ def register():
         conn.close()
 
         try:
-    msg = Message('Your Registration OTP',
-                  sender=app.config['MAIL_USERNAME'],
-                  recipients=[email])
-    msg.body = f'Your OTP is: {otp}'
-    mail.send(msg)
-except Exception as e:
-    print("Email sending failed:", e)
-    print("OTP (for testing):", otp)
-
+            msg = Message('Your Registration OTP',
+                          sender=app.config['MAIL_USERNAME'],
+                          recipients=[email])
+            msg.body = f'Your OTP is: {otp}'
+            mail.send(msg)
+        except Exception as e:
+            print("Email sending failed:", e)
+            print("OTP (for testing):", otp)
 
         flash("OTP sent to email")
         return redirect(url_for("verify_otp"))
@@ -165,9 +160,14 @@ def forgot_password():
             token = serializer.dumps(email, salt='password-reset')
             link = url_for('reset_with_token', token=token, _external=True)
 
-            msg = Message('Password Reset', sender=app.config['MAIL_USERNAME'], recipients=[email])
-            msg.body = f'Reset link: {link}'
-            mail.send(msg)
+            try:
+                msg = Message('Password Reset',
+                              sender=app.config['MAIL_USERNAME'],
+                              recipients=[email])
+                msg.body = f'Reset link: {link}'
+                mail.send(msg)
+            except Exception as e:
+                print("Email failed:", e)
 
             flash("Reset link sent")
             return redirect(url_for("home"))
