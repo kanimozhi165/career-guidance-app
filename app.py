@@ -16,7 +16,7 @@ app.secret_key = os.environ.get("SECRET_KEY", "fallback_secret_key")
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_TIMEOUT'] = 30  # Increased for cloud
+app.config['MAIL_TIMEOUT'] = 60  # Increased for cloud
 app.config['MAIL_USERNAME'] = os.environ.get("MAIL_USERNAME")
 app.config['MAIL_PASSWORD'] = os.environ.get("MAIL_PASSWORD")
 app.config['MAIL_SUPPRESS_SEND'] = False
@@ -205,6 +205,7 @@ with app.app_context():
 
 if __name__ == "__main__":
     app.run()
+
 
 
 
