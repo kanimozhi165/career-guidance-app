@@ -1,8 +1,8 @@
 body {
     margin: 0;
     font-family: Arial, sans-serif;
-    height: 100vh;
-    overflow: hidden;
+    min-height: 100vh;
+    overflow-x: hidden;
 
     /* Animated gradient background */
     background: linear-gradient(-45deg, #6a11cb, #2575fc, #ff6a00, #ee0979);
@@ -15,35 +15,31 @@ body {
     position: relative;
 }
 
-/* Career images blended as soft background */
+/* Background career images */
 body::after {
     content: "";
     position: absolute;
     width: 100%;
     height: 100%;
-
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-
     animation: imageSlide 18s infinite;
     opacity: 0.18;
     z-index: 0;
 }
 
-
-/* Login Box */
+/* MAIN BOX (used by ALL pages) */
 .login-box {
     position: relative;
     z-index: 1;
     background: white;
     padding: 40px;
-    width: 350px;
+    width: 90%;
+    max-width: 420px;   /* prevents too wide on desktop */
     border-radius: 12px;
     box-shadow: 0 20px 40px rgba(0,0,0,0.4);
     text-align: center;
-
-    /* POP-UP animation */
     animation: popIn 0.8s ease-out;
 }
 
@@ -62,7 +58,7 @@ input:focus {
     transform: scale(1.05);
 }
 
-/* Button */
+/* Buttons */
 button {
     width: 100%;
     padding: 12px;
@@ -79,7 +75,6 @@ button:hover {
     transform: scale(1.05);
 }
 
-/* Text */
 .msg { color: red; }
 
 /* Animations */
@@ -100,12 +95,14 @@ button:hover {
     66%  { background-image: url("../images/img3.png"); }
     100% { background-image: url("../images/img1.png"); }
 }
-/* MOBILE RESPONSIVE FIX */
+
+/* 📱 MOBILE FIX */
 @media (max-width: 600px) {
 
     .login-box {
-        width: 92%;
+        width: 95%;
         padding: 25px;
+        border-radius: 10px;
     }
 
     h2 {
@@ -113,14 +110,15 @@ button:hover {
     }
 
     input {
-        font-size: 14px;
+        font-size: 16px;
+        padding: 14px;
     }
 
     button {
-        font-size: 15px;
+        font-size: 16px;
+        padding: 14px;
     }
 
-    /* Show full background images on mobile */
     body::after {
         background-size: contain;
         background-position: center top;
@@ -128,6 +126,8 @@ button:hover {
         opacity: 0.25;
     }
 }
+
+
 
 
 
