@@ -104,6 +104,7 @@ def register():
         except Exception as e:
             print("Email sending failed:", e)
             print("OTP (for testing):", otp)
+            flash(f"Email failed. Your OTP (for testing): {otp}")
 
         flash("OTP sent to email")
         return redirect(url_for("verify_otp"))
@@ -200,3 +201,4 @@ def reset_with_token(token):
 
 if __name__ == "__main__":
     app.run(debug=True)
+
