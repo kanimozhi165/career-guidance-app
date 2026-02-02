@@ -7,30 +7,21 @@ import random
 import time
 import os
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, "users.db")
-
-def ensure_db():
-    if not os.path.exists(DB_PATH):
-        print("Database not found. Creating new one...")
-    init_db()
-
+# ✅ Database path allowed on Render
+DB_PATH = "/tmp/users.db"
 
 app = Flask(__name__)
 
-@app.before_first_request
-def startup():
-    ensure_db()
-
-app.secret_key = "career_guidance_secret_key"
+# ✅ Secret key from environment with fallback
+app.secret_key = os.environ.get("SECRET_KEY", "fallback_secret_key")
 
 # ---------------- MAIL CONFIG ----------------
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_TIMEOUT'] = 5
-app.config['MAIL_USERNAME'] = 'kaniavid@gmail.com'
-app.config['MAIL_PASSWORD'] = 'qousdhqdxawxstqk'
+app.config['MAIL_TIMEOUT'] = 30   # ✅ Increased timeout
+app.config['MAIL_USERNAME'] = os.environ.get("MAIL_USERNAME")
+app.config['MAIL_PASSWORD'] = os.environ.get("MAIL_PASSWORD")
 
 mail = Mail(app)
 serializer = URLSafeTimedSerializer(app.secret_key)
@@ -39,8 +30,7 @@ serializer = URLSafeTimedSerializer(app.secret_key)
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
-# ---------------- DATABASE SETUP ----------------
-# ---------------- DATABASE SETUP ----------------
+# ---------------- DATABASE ----------------
 def get_db_connection():
     conn = sqlite3.connect(DB_PATH, check_same_thread=False)
     conn.row_factory = sqlite3.Row
@@ -62,11 +52,7 @@ def init_db():
     conn.commit()
     conn.close()
 
-
-
-
 # ---------------- ROUTES ----------------
-
 @app.route("/")
 def home():
     return render_template("login.html")
@@ -77,7 +63,6 @@ def login():
     password = hash_password(request.form["password"])
 
     conn = get_db_connection()
-
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM users WHERE username=? AND password=? AND otp IS NULL", (username, password))
     user = cursor.fetchone()
@@ -85,11 +70,9 @@ def login():
 
     if user:
         return render_template("dashboard.html", username=username)
-    else:
-        flash("Invalid credentials or account not verified")
-        return redirect(url_for("home"))
+    flash("Invalid credentials or account not verified")
+    return redirect(url_for("home"))
 
-# ---------------- REGISTER WITH OTP ----------------
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
@@ -99,8 +82,8 @@ def register():
         otp = str(random.randint(100000, 999999))
 
         conn = get_db_connection()
-
         cursor = conn.cursor()
+
         cursor.execute("SELECT * FROM users WHERE email=?", (email,))
         if cursor.fetchone():
             flash("Email already registered")
@@ -122,15 +105,13 @@ def register():
             mail.send(msg)
         except Exception as e:
             print("Email sending failed:", e)
-            print("OTP (for testing):", otp)
-            flash(f"Email failed. Your OTP (for testing): {otp}")
+            flash(f"Email failed. OTP: {otp}")
 
         flash("OTP sent to email")
         return redirect(url_for("verify_otp"))
 
     return render_template("register.html")
 
-# ---------------- VERIFY OTP ----------------
 @app.route("/verify", methods=["GET", "POST"])
 def verify_otp():
     if request.method == "POST":
@@ -138,7 +119,6 @@ def verify_otp():
         entered_otp = request.form["otp"]
 
         conn = get_db_connection()
-
         cursor = conn.cursor()
         cursor.execute("SELECT otp, otp_time FROM users WHERE email=?", (email,))
         user = cursor.fetchone()
@@ -153,7 +133,6 @@ def verify_otp():
 
             if entered_otp == real_otp:
                 conn = get_db_connection()
-
                 cursor = conn.cursor()
                 cursor.execute("UPDATE users SET otp=NULL, otp_time=NULL WHERE email=?", (email,))
                 conn.commit()
@@ -166,14 +145,12 @@ def verify_otp():
 
     return render_template("verify.html")
 
-# ---------------- FORGOT PASSWORD ----------------
 @app.route("/forgot", methods=["GET", "POST"])
 def forgot_password():
     if request.method == "POST":
         email = request.form["email"]
 
         conn = get_db_connection()
-
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM users WHERE email=?", (email,))
         user = cursor.fetchone()
@@ -199,7 +176,6 @@ def forgot_password():
 
     return render_template("forgot.html")
 
-# ---------------- RESET PASSWORD ----------------
 @app.route('/reset/<token>', methods=['GET', 'POST'])
 def reset_with_token(token):
     try:
@@ -211,7 +187,6 @@ def reset_with_token(token):
         new_password = hash_password(request.form['password'])
 
         conn = get_db_connection()
-
         cursor = conn.cursor()
         cursor.execute("UPDATE users SET password=? WHERE email=?", (new_password, email))
         conn.commit()
@@ -225,8 +200,11 @@ def reset_with_token(token):
 with app.app_context():
     init_db()
 
+# ✅ Required for Render
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
+
+
 
 
 
