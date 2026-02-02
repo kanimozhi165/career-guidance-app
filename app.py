@@ -41,6 +41,7 @@ def init_db():
     conn.commit()
     conn.close()
 
+
 init_db()
 
 # ---------------- ROUTES ----------------
@@ -188,6 +189,7 @@ def reset_with_token(token):
 
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
