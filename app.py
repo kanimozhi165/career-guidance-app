@@ -10,7 +10,18 @@ import os
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "users.db")
 
+def ensure_db():
+    if not os.path.exists(DB_PATH):
+        print("Database not found. Creating new one...")
+    init_db()
+
+
 app = Flask(__name__)
+
+@app.before_first_request
+def startup():
+    ensure_db()
+
 app.secret_key = "career_guidance_secret_key"
 
 # ---------------- MAIL CONFIG ----------------
@@ -216,6 +227,7 @@ with app.app_context():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
