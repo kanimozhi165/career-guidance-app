@@ -1,4 +1,3 @@
-
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_mail import Mail, Message
 from itsdangerous import URLSafeTimedSerializer
@@ -30,8 +29,14 @@ def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
 # ---------------- DATABASE SETUP ----------------
+# ---------------- DATABASE SETUP ----------------
+def get_db_connection():
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    return conn
+
 def init_db():
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
@@ -46,7 +51,8 @@ def init_db():
     conn.commit()
     conn.close()
 
-init_db()
+
+
 
 # ---------------- ROUTES ----------------
 
@@ -59,7 +65,8 @@ def login():
     username = request.form["username"]
     password = hash_password(request.form["password"])
 
-    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    conn = get_db_connection()
+
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM users WHERE username=? AND password=? AND otp IS NULL", (username, password))
     user = cursor.fetchone()
@@ -80,7 +87,8 @@ def register():
         password = hash_password(request.form["password"])
         otp = str(random.randint(100000, 999999))
 
-        conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+        conn = get_db_connection()
+
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM users WHERE email=?", (email,))
         if cursor.fetchone():
@@ -118,7 +126,8 @@ def verify_otp():
         email = request.form["email"]
         entered_otp = request.form["otp"]
 
-        conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+        conn = get_db_connection()
+
         cursor = conn.cursor()
         cursor.execute("SELECT otp, otp_time FROM users WHERE email=?", (email,))
         user = cursor.fetchone()
@@ -132,7 +141,8 @@ def verify_otp():
                 return redirect(url_for("register"))
 
             if entered_otp == real_otp:
-                conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+                conn = get_db_connection()
+
                 cursor = conn.cursor()
                 cursor.execute("UPDATE users SET otp=NULL, otp_time=NULL WHERE email=?", (email,))
                 conn.commit()
@@ -151,7 +161,8 @@ def forgot_password():
     if request.method == "POST":
         email = request.form["email"]
 
-        conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+        conn = get_db_connection()
+
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM users WHERE email=?", (email,))
         user = cursor.fetchone()
@@ -188,7 +199,8 @@ def reset_with_token(token):
     if request.method == 'POST':
         new_password = hash_password(request.form['password'])
 
-        conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+        conn = get_db_connection()
+
         cursor = conn.cursor()
         cursor.execute("UPDATE users SET password=? WHERE email=?", (new_password, email))
         conn.commit()
@@ -199,7 +211,12 @@ def reset_with_token(token):
 
     return render_template("reset.html")
 
+with app.app_context():
+    init_db()
+
 if __name__ == "__main__":
     app.run(debug=True)
+
+
 
 
