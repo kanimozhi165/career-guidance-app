@@ -1,4 +1,5 @@
 
+
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_mail import Mail, Message
 from itsdangerous import URLSafeTimedSerializer
@@ -6,6 +7,11 @@ import sqlite3
 import hashlib
 import random
 import time
+
+import os
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, "users.db")
+
 
 app = Flask(__name__)
 app.secret_key = "career_guidance_secret_key"
@@ -26,7 +32,7 @@ def hash_password(password):
 
 # ---------------- DATABASE SETUP ----------------
 def init_db():
-    conn = sqlite3.connect("users.db")
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
@@ -42,6 +48,8 @@ def init_db():
     conn.close()
 
 
+init_db()
+
 # ---------------- ROUTES ----------------
 
 @app.route("/")
@@ -53,7 +61,7 @@ def login():
     username = request.form["username"]
     password = hash_password(request.form["password"])
 
-    conn = sqlite3.connect("users.db")
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM users WHERE username=? AND password=? AND otp IS NULL", (username, password))
     user = cursor.fetchone()
@@ -75,7 +83,7 @@ def register():
 
         otp = str(random.randint(100000, 999999))
 
-        conn = sqlite3.connect("users.db")
+        conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
 
         cursor.execute("SELECT * FROM users WHERE email=?", (email,))
@@ -91,11 +99,16 @@ def register():
         conn.commit()
         conn.close()
 
-        msg = Message('Your Registration OTP',
-                      sender=app.config['MAIL_USERNAME'],
-                      recipients=[email])
-        msg.body = f'Your OTP is: {otp}'
-        mail.send(msg)
+        try:
+    msg = Message('Your Registration OTP',
+                  sender=app.config['MAIL_USERNAME'],
+                  recipients=[email])
+    msg.body = f'Your OTP is: {otp}'
+    mail.send(msg)
+except Exception as e:
+    print("Email sending failed:", e)
+    print("OTP (for testing):", otp)
+
 
         flash("OTP sent to email")
         return redirect(url_for("verify_otp"))
@@ -109,7 +122,7 @@ def verify_otp():
         email = request.form["email"]
         entered_otp = request.form["otp"]
 
-        conn = sqlite3.connect("users.db")
+        conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
         cursor.execute("SELECT otp, otp_time FROM users WHERE email=?", (email,))
         user = cursor.fetchone()
@@ -123,7 +136,7 @@ def verify_otp():
                 return redirect(url_for("register"))
 
             if entered_otp == real_otp:
-                conn = sqlite3.connect("users.db")
+                conn = sqlite3.connect(DB_PATH)
                 cursor = conn.cursor()
                 cursor.execute("UPDATE users SET otp=NULL, otp_time=NULL WHERE email=?", (email,))
                 conn.commit()
@@ -142,7 +155,7 @@ def forgot_password():
     if request.method == "POST":
         email = request.form["email"]
 
-        conn = sqlite3.connect("users.db")
+        conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM users WHERE email=?", (email,))
         user = cursor.fetchone()
@@ -174,7 +187,7 @@ def reset_with_token(token):
     if request.method == 'POST':
         new_password = hash_password(request.form['password'])
 
-        conn = sqlite3.connect("users.db")
+        conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
         cursor.execute("UPDATE users SET password=? WHERE email=?", (new_password, email))
         conn.commit()
@@ -187,10 +200,3 @@ def reset_with_token(token):
 
 if __name__ == "__main__":
     app.run(debug=True)
-
-
-
-
-
-
-
